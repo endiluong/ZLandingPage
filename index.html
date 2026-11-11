@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room Tour</title>
+    <meta name="description" content="A guided three.js tour of my room and working space." />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene" aria-hidden="true"></canvas>
+
+    <nav class="bar" aria-label="Scene controls">
+      <div class="group" role="group" aria-label="Lighting" data-control="lighting">
+        <button data-value="morning">Morning</button>
+        <button data-value="day">Day</button>
+        <button data-value="evening" aria-pressed="true">Evening</button>
+        <button data-value="night">Night</button>
+      </div>
+      <div class="group" role="group" aria-label="Render style" data-control="style">
+        <button data-value="full" aria-pressed="true">Full</button>
+        <button data-value="clay">Clay</button>
+        <button data-value="wire">Wireframe</button>
+      </div>
+    </nav>
+
+    <!-- Each section is one stop of the camera tour (see src/tour.js). Copy is draft. -->
+    <main>
+      <section class="left">
+        <div class="card">
+          <p class="eyebrow">Room tour</p>
+          <h1>Come in. This is where I work and play.</h1>
+          <p>Scroll to walk through the room, one corner at a time.</p>
+        </div>
+      </section>
+      <section class="right">
+        <div class="card">
+          <p class="eyebrow">01 · The desk</p>
+          <h2>Where most of the hours go</h2>
+          <p>Draft copy: what you do here, the setup you're proud of, the thing that's always on the screen.</p>
+        </div>
+      </section>
+      <section class="right">
+        <div class="card">
+          <p class="eyebrow">02 · The shelf</p>
+          <h2>Things worth keeping</h2>
+          <p>Draft copy: books, collections, the objects that say something about you.</p>
+        </div>
+      </section>
+      <section class="left">
+        <div class="card">
+          <p class="eyebrow">03 · The window</p>
+          <h2>Light changes everything</h2>
+          <p>Try the lighting buttons at the top: morning, day, evening, night.</p>
+        </div>
+      </section>
+      <section class="right">
+        <div class="card">
+          <p class="eyebrow">04 · The hobby corner</p>
+          <h2>What I do when I'm not working</h2>
+          <p>Draft copy: your hobby goes here, with the real objects modelled in.</p>
+        </div>
+      </section>
+      <section class="left">
+        <div class="card">
+          <p class="eyebrow">That's the room</p>
+          <h2>Thanks for visiting</h2>
+          <p>Draft copy: a sign-off, and links to wherever people can find you.</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
