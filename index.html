@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Room Tour</title>
-    <meta name="description" content="A guided three.js tour of my room and working space." />
+    <title>Dakonipa · Room Tour</title>
+    <meta name="description" content="Dakonipa: Day Koder Nite Painter. A guided three.js tour of my room and working space." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -12,60 +12,82 @@
 
     <nav class="bar" aria-label="Scene controls">
       <div class="group" role="group" aria-label="Lighting" data-control="lighting">
-        <button data-value="morning">Morning</button>
-        <button data-value="day">Day</button>
-        <button data-value="evening" aria-pressed="true">Evening</button>
-        <button data-value="night">Night</button>
+        <button data-value="morning" data-i18n="morning">Morning</button>
+        <button data-value="day" data-i18n="day">Day</button>
+        <button data-value="evening" data-i18n="evening">Evening</button>
+        <button data-value="night" data-i18n="night" aria-pressed="true">Night</button>
       </div>
       <div class="group" role="group" aria-label="Render style" data-control="style">
-        <button data-value="full" aria-pressed="true">Full</button>
-        <button data-value="clay">Clay</button>
-        <button data-value="wire">Wireframe</button>
+        <button data-value="full" data-i18n="full" aria-pressed="true">Full</button>
+        <button data-value="clay" data-i18n="clay">Clay</button>
+        <button data-value="wire" data-i18n="wire">Wireframe</button>
+      </div>
+      <div class="group">
+        <button id="curtains" data-i18n="curtains">Curtains</button>
+      </div>
+      <div class="group" role="group" aria-label="Language" data-control="lang">
+        <button data-value="en" aria-pressed="true">EN</button>
+        <button data-value="vi">VI</button>
       </div>
     </nav>
 
-    <!-- Each section is one stop of the camera tour (see src/tour.js). Copy is draft. -->
+    <!-- Each section is one stop of the camera tour (see src/tour.js). Text lives in src/i18n.js. -->
     <main>
       <section class="left">
         <div class="card">
-          <p class="eyebrow">Room tour</p>
-          <h1>Come in. This is where I work and play.</h1>
-          <p>Scroll to walk through the room, one corner at a time.</p>
+          <p class="eyebrow" data-i18n="s0.eyebrow">Room tour</p>
+          <h1>Dakonipa</h1>
+          <p class="tagline">Day Koder Nite Painter</p>
+          <p data-i18n="s0.body"></p>
         </div>
       </section>
       <section class="right">
         <div class="card">
-          <p class="eyebrow">01 · The desk</p>
-          <h2>Where most of the hours go</h2>
-          <p>Draft copy: what you do here, the setup you're proud of, the thing that's always on the screen.</p>
-        </div>
-      </section>
-      <section class="right">
-        <div class="card">
-          <p class="eyebrow">02 · The shelf</p>
-          <h2>Things worth keeping</h2>
-          <p>Draft copy: books, collections, the objects that say something about you.</p>
+          <p class="eyebrow" data-i18n="s1.eyebrow"></p>
+          <h2 data-i18n="s1.title"></h2>
+          <p data-i18n="s1.body"></p>
         </div>
       </section>
       <section class="left">
         <div class="card">
-          <p class="eyebrow">03 · The window</p>
-          <h2>Light changes everything</h2>
-          <p>Try the lighting buttons at the top: morning, day, evening, night.</p>
+          <p class="eyebrow" data-i18n="s2.eyebrow"></p>
+          <h2 data-i18n="s2.title"></h2>
+          <p data-i18n="s2.body"></p>
         </div>
       </section>
       <section class="right">
         <div class="card">
-          <p class="eyebrow">04 · The hobby corner</p>
-          <h2>What I do when I'm not working</h2>
-          <p>Draft copy: your hobby goes here, with the real objects modelled in.</p>
+          <p class="eyebrow" data-i18n="s3.eyebrow"></p>
+          <h2 data-i18n="s3.title"></h2>
+          <p data-i18n="s3.body"></p>
         </div>
       </section>
       <section class="left">
         <div class="card">
-          <p class="eyebrow">That's the room</p>
-          <h2>Thanks for visiting</h2>
-          <p>Draft copy: a sign-off, and links to wherever people can find you.</p>
+          <p class="eyebrow" data-i18n="s4.eyebrow"></p>
+          <h2 data-i18n="s4.title"></h2>
+          <p data-i18n="s4.body"></p>
+        </div>
+      </section>
+      <section class="left">
+        <div class="card">
+          <p class="eyebrow" data-i18n="s5.eyebrow"></p>
+          <h2 data-i18n="s5.title"></h2>
+          <p data-i18n="s5.body"></p>
+        </div>
+      </section>
+      <section class="right">
+        <div class="card">
+          <p class="eyebrow" data-i18n="s6.eyebrow"></p>
+          <h2 data-i18n="s6.title"></h2>
+          <p data-i18n="s6.body"></p>
+        </div>
+      </section>
+      <section class="left">
+        <div class="card">
+          <p class="eyebrow" data-i18n="s7.eyebrow"></p>
+          <h2 data-i18n="s7.title"></h2>
+          <p data-i18n="s7.body"></p>
         </div>
       </section>
     </main>

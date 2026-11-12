@@ -4,12 +4,14 @@ import * as THREE from 'three';
 
 // position = where the camera stands, look = what it points at (metres).
 export const STOPS = [
-  { name: 'overview', position: [-1.55, 1.75, 2.15], look: [0.7, 0.95, -1.6] },
-  { name: 'desk', position: [0.05, 1.4, -0.75], look: [0.45, 1.0, -2.3] },
-  { name: 'shelf', position: [-0.15, 1.35, -0.55], look: [-1.9, 1.05, -1.0] },
-  { name: 'window', position: [-0.4, 1.45, 0.5], look: [2.0, 1.35, -0.2] },
-  { name: 'hobby', position: [-0.2, 1.35, 0.75], look: [-1.5, 0.85, 2.2] },
-  { name: 'outro', position: [1.6, 2.25, 2.2], look: [-0.4, 0.8, -1.2] },
+  { name: 'overview', position: [3.3, 1.9, 0.95], look: [0.5, 1.05, 3.3] },
+  { name: 'desk', position: [1.6, 1.45, 2.7], look: [0.0, 1.2, 2.95] },
+  { name: 'kits', position: [1.45, 1.75, 2.75], look: [0.0, 2.2, 3.55] },
+  { name: 'printers', position: [1.55, 1.5, 1.55], look: [0.6, 1.05, 0.2] },
+  { name: 'water', position: [2.3, 1.4, 1.75], look: [2.35, 0.98, 0.1] },
+  { name: 'paint', position: [2.45, 1.5, 2.95], look: [4.25, 1.05, 3.85] },
+  { name: 'shelf', position: [2.2, 1.35, 2.55], look: [2.15, 1.12, 4.5] },
+  { name: 'outro', position: [0.75, 2.25, 4.0], look: [2.9, 0.9, 1.3] },
 ];
 
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -54,7 +56,7 @@ export function createTour(camera, { reducedMotion = false } = {}) {
     liveLook.lerp(goalLook, a);
 
     // A small look-around that follows the mouse.
-    offset.set(pointer.x * 0.12, -pointer.y * 0.08, 0).applyQuaternion(camera.quaternion);
+    offset.set(pointer.x * 0.1, -pointer.y * 0.07, 0).applyQuaternion(camera.quaternion);
     camera.position.copy(livePos);
     camera.lookAt(offset.add(liveLook));
   }
