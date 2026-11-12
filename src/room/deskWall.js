@@ -1,7 +1,7 @@
 // Wall A: the standing desk, the shelves above it, and the pegboards.
 // Local x runs from the TV corner (0) to the entrance door (3.05..3.95).
 import * as THREE from 'three';
-import { mat, box, cyl, ball, slab, grp, rng } from '../lib/build.js';
+import { mat, box, cyl, ball, slab, grp, rng, cable } from '../lib/build.js';
 import { M, mecha, figure, plush, catFigurine, bottle, kitBox, officeChair } from './props.js';
 
 const S = 0.768; // desk surface height
@@ -102,6 +102,41 @@ export function buildDeskWall(f, tex) {
   const olive = [mat(0x47553a), mat(0x23281f), mat(0xb9a05a)];
   mecha(f, [2.1, S, 0.5], 0.2, olive, 0.4, 0);
   figure(f, [2.0, S + 0.1, 0.14], 0.17, M.black, 0.2, M.charcoal);
+
+  // ---- cables and the small things that make a desk look used ----
+  const teal = mat(0x7fd6c9, { roughness: 0.5 });
+  const coil = [[1.84, S + 0.022, 0.5]];
+  for (let i = 0; i <= 70; i++) {
+    const t = i / 70;
+    const a = t * Math.PI * 2 * 12;
+    coil.push([1.87 + t * 0.2, S + 0.014 + Math.sin(a) * 0.007, 0.46 - t * 0.1 + Math.cos(a) * 0.007]);
+  }
+  coil.push([2.1, S + 0.008, 0.3], [2.02, S + 0.006, 0.12]);
+  cable(f, coil, 0.0026, teal);
+  const wire = M.rubber;
+  cable(f, [[1.5, S + 0.3, 0.17], [1.49, S + 0.16, 0.1], [1.44, S + 0.118, 0.07], [1.3, S + 0.116, 0.07]], 0.004, wire);
+  cable(f, [[1.6, S + 0.7, 0.17], [1.61, S + 0.4, 0.08], [1.63, S + 0.12, 0.06], [1.8, S + 0.115, 0.07]], 0.004, wire);
+  cable(f, [[0.77, S + 0.47, 0.2], [0.73, S + 0.3, 0.25], [0.76, S + 0.06, 0.31], [0.9, S + 0.006, 0.36], [1.0, S + 0.006, 0.3]], 0.003, wire);
+  cable(f, [[1.98, S + 0.03, 0.52], [1.99, S + 0.008, 0.44], [2.02, S + 0.006, 0.3], [2.0, S + 0.006, 0.14]], 0.002, wire);
+  cable(f, [[2.74, 0.64, 0.14], [2.76, 0.5, 0.03], [2.78, 0.2, 0.025], [2.8, 0.02, 0.03]], 0.004, wire);
+  // power strip and a charger at the back of the desk
+  box(f, [0.26, 0.035, 0.055], [2.0, S + 0.018, 0.1], M.white, { r: 0.008 });
+  for (let i = 0; i < 4; i++) box(f, [0.03, 0.004, 0.03], [1.91 + i * 0.058, S + 0.037, 0.1], M.charcoal);
+  box(f, [0.04, 0.045, 0.04], [1.91, S + 0.058, 0.1], M.white, { r: 0.006 });
+  // webcam on the top monitor
+  box(top, [0.1, 0.032, 0.035], [0, 0.205, 0.005], M.black, { r: 0.012 });
+  cyl(top, 0.011, 0.01, [0, 0.205, 0.024], mat(0x1b2a4a, { roughness: 0.1, metalness: 0.6 }), { rot: [Math.PI / 2, 0, 0] });
+  // notebook, pen, sticky notes, mug handle
+  box(f, [0.14, 0.016, 0.2], [0.86, S + 0.008, 0.6], mat(0x3a2418, { roughness: 0.7 }), { r: 0.004, rot: [0, 0.2, 0] });
+  box(f, [0.008, 0.018, 0.2], [0.9, S + 0.009, 0.61], M.black, { rot: [0, 0.2, 0] });
+  cyl(f, 0.004, 0.14, [0.99, S + 0.005, 0.66], mat(0xc9a13b, { metalness: 0.7, roughness: 0.3 }), { rot: [Math.PI / 2, 0, 0.4], seg: 8 });
+  box(f, [0.075, 0.006, 0.075], [2.3, S + 0.003, 0.64], mat(0xf2a0b5, { roughness: 0.9 }), { rot: [0, 0.3, 0], cast: false });
+  box(f, [0.075, 0.004, 0.075], [2.31, S + 0.008, 0.645], mat(0xf6dc6a, { roughness: 0.9 }), { rot: [0, -0.2, 0], cast: false });
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.006, 8, 16, Math.PI), mat(0x2f3a3f, { roughness: 0.3, metalness: 0.5 }));
+  handle.position.set(1.46, S + 0.043, 0.66);
+  handle.rotation.z = -Math.PI / 2;
+  handle.castShadow = true;
+  f.add(handle);
 
   // ---- under and beside the desk ----
   box(f, [0.2, 0.44, 0.42], [2.3, 0.23, 0.36], M.charcoal, { r: 0.01 });

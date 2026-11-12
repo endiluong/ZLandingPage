@@ -78,71 +78,127 @@ function pegboard(bg, hole) {
   }, { repeat: true });
 }
 
+// The editor screen shows real, readable code (this project's own tour data).
+const SOURCE = `// The guided tour: one camera stop per section.
+import * as THREE from 'three';
+
+export const STOPS = [
+  { name: 'overview', position: [3.3, 1.9, 0.95], look: [0.5, 1.05, 3.3] },
+  { name: 'desk', position: [1.6, 1.45, 2.7], look: [0.0, 1.2, 2.95] },
+  { name: 'kits', position: [1.45, 1.75, 2.75], look: [0.0, 2.2, 3.55] },
+  { name: 'paint', position: [2.45, 1.5, 2.95], look: [4.25, 1.05, 3.85] },
+];
+
+const smooth = (t) => t * t * (3 - 2 * t);
+
+export function createTour(camera, { reducedMotion = false } = {}) {
+  const positions = STOPS.map((s) => new THREE.Vector3(...s.position));
+  const looks = STOPS.map((s) => new THREE.Vector3(...s.look));
+  const goal = new THREE.Vector3();
+  let first = true;
+
+  function update(dt) {
+    const p = progress();
+    const i = Math.min(Math.floor(p), STOPS.length - 2);
+    // Hold on each stop, then travel to the next one.
+    const local = smooth(clamp((p - i - 0.2) / 0.6, 0, 1));
+    goal.lerpVectors(positions[i], positions[i + 1], local);
+    camera.position.lerp(goal, first ? 1 : 1 - Math.exp(-dt * 4));
+    first = false;
+  }
+
+  return { update };
+}`;
+
+const TOKEN = /(\/\/.*$)|('[^']*'|`[^`]*`)|\b(import|export|from|const|let|function|return|new|if|else|true|false)\b|\b(\d+\.?\d*)\b|([A-Za-z_]\w*(?=\())|([A-Za-z_]\w*)|(\s+)|(.)/g;
+const INK = ['#6a9955', '#ce9178', '#c586c0', '#b5cea8', '#dcdcaa', '#9cdcfe', '', '#d4d4d4'];
+
 function codeScreen() {
-  const r = rng(21);
-  const colours = ['#9cdcfe', '#c586c0', '#dcdcaa', '#ce9178', '#4ec9b0', '#6a9955', '#d4d4d4'];
-  return tex(1024, 576, (g, w, h) => {
+  return tex(2048, 1152, (g, w, h) => {
     g.fillStyle = '#1e1e1e'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#333333'; g.fillRect(0, 0, 44, h);
-    g.fillStyle = '#252526'; g.fillRect(44, 0, 190, h);
-    g.fillStyle = '#2d2d2d'; g.fillRect(234, 0, w, 30);
-    g.fillStyle = '#1e1e1e'; g.fillRect(234, 0, 150, 30);
-    g.fillStyle = '#007acc'; g.fillRect(0, h - 20, w, 20);
-    for (let i = 0; i < 6; i++) { g.fillStyle = '#858585'; g.fillRect(12, 16 + i * 40, 20, 20); }
-    for (let i = 0; i < 22; i++) {
-      g.fillStyle = i === 7 ? '#37373d' : 'transparent';
-      g.fillRect(44, 40 + i * 22, 190, 22);
-      g.fillStyle = '#cccccc';
-      g.fillRect(60 + (i % 3) * 12, 47 + i * 22, 60 + r() * 80, 7);
-    }
-    let indent = 0;
-    for (let i = 0; i < 27; i++) {
-      const y = 46 + i * 19;
-      g.fillStyle = '#6e7681'; g.fillRect(246, y, 16, 7);
-      if (r() < 0.12) continue;
-      indent = Math.max(0, Math.min(4, indent + Math.floor(r() * 3) - 1));
-      let x = 280 + indent * 26;
-      const parts = 1 + Math.floor(r() * 5);
-      for (let p = 0; p < parts; p++) {
-        const len = 22 + r() * 90;
-        g.fillStyle = colours[Math.floor(r() * colours.length)];
-        g.fillRect(x, y, len, 7);
-        x += len + 9;
+    g.fillStyle = '#333333'; g.fillRect(0, 0, 80, h);
+    g.fillStyle = '#252526'; g.fillRect(80, 0, 380, h);
+    g.fillStyle = '#2d2d2d'; g.fillRect(460, 0, w, 56);
+    g.fillStyle = '#1e1e1e'; g.fillRect(460, 0, 250, 56);
+    g.fillStyle = '#007acc'; g.fillRect(0, h - 36, w, 36);
+    for (let i = 0; i < 6; i++) { g.fillStyle = i === 0 ? '#ffffff' : '#858585'; g.fillRect(24, 30 + i * 76, 32, 32); }
+    g.textBaseline = 'middle';
+    g.font = '24px ui-sans-serif, system-ui, sans-serif';
+    g.fillStyle = '#bbbbbb'; g.fillText('EXPLORER', 104, 30);
+    const files = ['▾ src', '   ▾ room', '        deskWall.js', '        displayWall.js', '        paintCorner.js', '        props.js', '        shell.js', '        waterWall.js', '     lighting.js', '     main.js', '     textures.js', '     tour.js', '  index.html', '  package.json', '  README.md'];
+    files.forEach((f, i) => {
+      if (i === 11) { g.fillStyle = '#37373d'; g.fillRect(80, 62 + i * 40, 380, 40); }
+      g.fillStyle = i === 11 ? '#ffffff' : '#cccccc';
+      g.fillText(f, 104, 82 + i * 40);
+    });
+    g.fillStyle = '#ffffff'; g.fillText('tour.js', 500, 30);
+    g.fillStyle = '#ffffff'; g.fillText('main    ✓ 0  ⚠ 0        Ln 12, Col 38    Spaces: 2    UTF-8    JavaScript', 24, h - 17);
+    g.font = '25px ui-monospace, Menlo, Consolas, monospace';
+    const cw = g.measureText('M').width;
+    SOURCE.split('\n').forEach((line, row) => {
+      const y = 92 + row * 31.5;
+      g.fillStyle = '#6e7681';
+      g.fillText(String(row + 1).padStart(2, ' '), 484, y);
+      let x = 560;
+      for (const m of line.matchAll(TOKEN)) {
+        const kind = m.slice(1).findIndex((v) => v !== undefined);
+        if (kind !== 6) { g.fillStyle = INK[kind]; g.fillText(m[0], x, y); }
+        x += m[0].length * cw;
       }
-    }
-    g.fillStyle = '#252526'; g.fillRect(w - 90, 30, 90, h - 50);
-    for (let i = 0; i < 90; i++) { g.fillStyle = 'rgba(200,200,200,0.25)'; g.fillRect(w - 80, 36 + i * 5.5, 10 + r() * 55, 2); }
+    });
+    // minimap
+    g.fillStyle = '#252526'; g.fillRect(w - 150, 56, 150, h - 92);
+    SOURCE.split('\n').forEach((line, row) => {
+      g.fillStyle = 'rgba(200,200,200,0.3)';
+      g.fillRect(w - 136, 66 + row * 7, Math.min(120, line.length * 1.6), 3);
+    });
   });
 }
 
 function dashboard() {
   const r = rng(33);
-  return tex(1024, 576, (g, w, h) => {
+  return tex(2048, 1152, (g, w, h) => {
     g.fillStyle = '#0d1117'; g.fillRect(0, 0, w, h);
+    g.textBaseline = 'middle';
     // Left: a 2x2 camera wall.
     const tints = ['#3d4f5c', '#55616b', '#3f4a46', '#5a5560'];
     for (let i = 0; i < 4; i++) {
-      const x = 10 + (i % 2) * 250, y = 10 + Math.floor(i / 2) * 278;
-      g.fillStyle = tints[i]; g.fillRect(x, y, 240, 268);
+      const x = 20 + (i % 2) * 500, y = 20 + Math.floor(i / 2) * 556;
+      g.fillStyle = tints[i]; g.fillRect(x, y, 480, 536);
       g.fillStyle = 'rgba(255,255,255,0.14)';
-      g.beginPath(); g.moveTo(x, y + 268); g.lineTo(x + 90 + r() * 60, y + 110); g.lineTo(x + 240, y + 150 + r() * 60); g.lineTo(x + 240, y + 268); g.fill();
-      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(x + 30 + r() * 120, y + 60, 50, 90);
-      g.fillStyle = '#e5534b'; g.beginPath(); g.arc(x + 14, y + 14, 5, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(x, y + 536); g.lineTo(x + 180 + r() * 120, y + 220); g.lineTo(x + 480, y + 300 + r() * 120); g.lineTo(x + 480, y + 536); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(x + 60 + r() * 240, y + 120, 100, 180);
+      g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(x, y, 480, 44);
+      g.fillStyle = '#e5534b'; g.beginPath(); g.arc(x + 24, y + 22, 9, 0, 7); g.fill();
+      g.font = '22px ui-monospace, Menlo, Consolas, monospace';
+      g.fillStyle = '#ffffff'; g.fillText(`CAM 0${i + 1}`, x + 44, y + 23);
+      g.fillText(`21:4${i}:1${i + 2}`, x + 350, y + 23);
     }
-    // Right: static charts.
-    const panel = (x, y, pw, ph) => { g.fillStyle = '#161b22'; g.fillRect(x, y, pw, ph); };
-    panel(520, 10, 494, 180); panel(520, 200, 242, 170); panel(772, 200, 242, 170); panel(520, 380, 494, 186);
+    // Right: static charts with titles and axes.
+    const panel = (x, y, pw, ph, title, value) => {
+      g.fillStyle = '#161b22'; g.fillRect(x, y, pw, ph);
+      g.strokeStyle = '#30363d'; g.lineWidth = 2; g.strokeRect(x, y, pw, ph);
+      g.font = '24px ui-sans-serif, system-ui, sans-serif';
+      g.fillStyle = '#8b949e'; g.fillText(title, x + 22, y + 30);
+      if (value) { g.font = '600 34px ui-sans-serif, system-ui, sans-serif'; g.fillStyle = '#e6edf3'; g.fillText(value, x + pw - 22 - g.measureText(value).width, y + 34); }
+      g.strokeStyle = '#21262d'; g.lineWidth = 1;
+      for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(x + 20, y + 60 + ((ph - 80) * i) / 4); g.lineTo(x + pw - 20, y + 60 + ((ph - 80) * i) / 4); g.stroke(); }
+    };
     const line = (x, y, pw, ph, colour) => {
-      g.strokeStyle = colour; g.lineWidth = 3; g.beginPath();
+      g.strokeStyle = colour; g.lineWidth = 5; g.lineJoin = 'round'; g.beginPath();
       let v = 0.5;
-      for (let i = 0; i <= 40; i++) { v = Math.max(0.1, Math.min(0.9, v + (r() - 0.48) * 0.16)); g.lineTo(x + (i / 40) * pw, y + ph - v * ph); }
+      for (let i = 0; i <= 48; i++) { v = Math.max(0.1, Math.min(0.9, v + (r() - 0.48) * 0.16)); g.lineTo(x + 24 + (i / 48) * (pw - 48), y + ph - 24 - v * (ph - 100)); }
       g.stroke();
     };
-    line(535, 25, 464, 150, '#58a6ff'); line(535, 25, 464, 150, '#3fb950');
-    for (let i = 0; i < 9; i++) { const bh = 20 + r() * 120; g.fillStyle = '#d29922'; g.fillRect(535 + i * 24, 355 - bh, 16, bh); }
-    g.strokeStyle = '#bc8cff'; g.lineWidth = 22; g.beginPath(); g.arc(893, 285, 55, -1.5, 2.6); g.stroke();
-    g.strokeStyle = '#30363d'; g.beginPath(); g.arc(893, 285, 55, 2.6, 4.78); g.stroke();
-    line(535, 395, 464, 156, '#f778ba');
+    panel(1040, 20, 988, 360, 'Requests per minute', '1,284');
+    line(1040, 20, 988, 360, '#58a6ff'); line(1040, 20, 988, 360, '#3fb950');
+    panel(1040, 400, 484, 340, 'Builds this week', '37');
+    for (let i = 0; i < 9; i++) { const bh = 40 + r() * 190; g.fillStyle = '#d29922'; g.fillRect(1070 + i * 48, 716 - bh, 32, bh); }
+    panel(1544, 400, 484, 340, 'Disk', '71%');
+    g.strokeStyle = '#bc8cff'; g.lineWidth = 40; g.beginPath(); g.arc(1786, 600, 96, -1.5, 2.9); g.stroke();
+    g.strokeStyle = '#30363d'; g.beginPath(); g.arc(1786, 600, 96, 2.9, 4.78); g.stroke();
+    panel(1040, 760, 988, 372, 'Latency (ms)', '42');
+    line(1040, 760, 988, 372, '#f778ba');
   });
 }
 

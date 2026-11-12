@@ -19,24 +19,57 @@ export const M = {
 export function mecha(parent, pos, h, [main, dark, accent], rotY = 0, variant = 0) {
   const g = grp(parent, pos, rotY);
   g.scale.setScalar(h);
+  const joint = M.charcoal;
   for (const s of [-1, 1]) {
-    box(g, [0.14, 0.42, 0.16], [s * 0.11, 0.25, 0], main);
-    box(g, [0.16, 0.07, 0.26], [s * 0.11, 0.035, 0.04], dark);
-    box(g, [0.12, 0.1, 0.05], [s * 0.11, 0.3, 0.09], accent);
-    box(g, [0.18, 0.15, 0.2], [s * 0.3, 0.75, 0], main);
-    box(g, [0.1, 0.3, 0.12], [s * 0.31, 0.53, 0], dark);
-    box(g, [0.11, 0.09, 0.13], [s * 0.31, 0.35, 0.02], main);
+    // leg: foot, flared shin, knee guard, thigh
+    box(g, [0.16, 0.06, 0.28], [s * 0.115, 0.03, 0.04], dark);
+    box(g, [0.1, 0.05, 0.1], [s * 0.115, 0.075, 0.13], main);
+    box(g, [0.155, 0.22, 0.19], [s * 0.115, 0.17, 0], main);
+    box(g, [0.1, 0.16, 0.05], [s * 0.115, 0.17, -0.11], dark);
+    box(g, [0.13, 0.08, 0.2], [s * 0.115, 0.3, 0.02], accent);
+    box(g, [0.12, 0.17, 0.14], [s * 0.11, 0.4, 0], main);
+    // skirt armour
+    box(g, [0.13, 0.13, 0.035], [s * 0.085, 0.45, 0.1], main, { rot: [-0.25, 0, 0] });
+    box(g, [0.04, 0.15, 0.16], [s * 0.2, 0.45, 0], main, { rot: [0, 0, s * 0.2] });
+    // arm: shoulder with a ridge, upper arm, forearm, fist
+    box(g, [0.19, 0.17, 0.23], [s * 0.31, 0.75, 0], main);
+    box(g, [0.2, 0.03, 0.12], [s * 0.32, 0.845, 0], accent);
+    box(g, [0.09, 0.14, 0.1], [s * 0.31, 0.61, 0], joint);
+    box(g, [0.12, 0.19, 0.15], [s * 0.315, 0.46, 0.02], main);
+    box(g, [0.08, 0.07, 0.09], [s * 0.315, 0.33, 0.03], dark);
+    // backpack thrusters
+    cyl(g, [0.045, 0.03], 0.1, [s * 0.08, 0.6, -0.2], joint, { seg: 8 });
+    // chest vents
+    box(g, [0.1, 0.055, 0.03], [s * 0.09, 0.72, 0.135], accent);
   }
-  box(g, [0.34, 0.1, 0.18], [0, 0.48, 0], dark);
-  box(g, [0.4, 0.26, 0.24], [0, 0.66, 0], main);
-  box(g, [0.2, 0.1, 0.06], [0, 0.7, 0.13], accent);
-  box(g, [0.13, 0.12, 0.14], [0, 0.86, 0], main);
-  box(g, [0.1, 0.03, 0.02], [0, 0.87, 0.07], accent);
-  box(g, [0.015, 0.12, 0.015], [0.05, 0.97, 0], dark);
-  box(g, [0.26, 0.2, 0.1], [0, 0.68, -0.16], dark);
-  if (variant % 3 === 0) box(g, [0.04, 0.05, 0.62], [0.42, 0.42, 0.12], dark, { rot: [-0.25, 0, 0] });
-  if (variant % 3 === 1) box(g, [0.03, 0.9, 0.03], [0.44, 0.55, 0.05], dark, { rot: [0.1, 0, -0.08] });
-  if (variant % 2 === 1) box(g, [0.05, 0.32, 0.26], [-0.44, 0.52, 0.04], accent);
+  box(g, [0.3, 0.08, 0.17], [0, 0.5, 0], joint);
+  box(g, [0.07, 0.1, 0.06], [0, 0.46, 0.1], accent);
+  box(g, [0.22, 0.1, 0.18], [0, 0.57, 0], dark);
+  box(g, [0.42, 0.2, 0.26], [0, 0.71, 0], main);
+  box(g, [0.14, 0.07, 0.05], [0, 0.63, 0.12], dark);
+  box(g, [0.2, 0.04, 0.2], [0, 0.82, 0], dark);
+  // head: helmet, visor, chin, crest
+  box(g, [0.13, 0.12, 0.14], [0, 0.89, 0], main);
+  box(g, [0.1, 0.028, 0.02], [0, 0.9, 0.071], accent);
+  box(g, [0.05, 0.035, 0.03], [0, 0.845, 0.07], dark);
+  box(g, [0.02, 0.1, 0.1], [0, 0.97, -0.01], accent);
+  box(g, [0.28, 0.24, 0.1], [0, 0.69, -0.17], dark);
+  if (variant % 3 === 0) {
+    box(g, [0.04, 0.06, 0.5], [0.43, 0.36, 0.14], joint, { rot: [-0.2, 0, 0] });
+    box(g, [0.03, 0.1, 0.05], [0.43, 0.31, 0.1], joint);
+    cyl(g, 0.012, 0.2, [0.43, 0.42, 0.46], dark, { rot: [Math.PI / 2 - 0.2, 0, 0], seg: 6 });
+  }
+  if (variant % 3 === 1) {
+    box(g, [0.025, 0.95, 0.025], [0.44, 0.55, 0.05], joint, { rot: [0.1, 0, -0.08] });
+    box(g, [0.03, 0.16, 0.12], [0.47, 1.02, 0.1], accent, { rot: [0.1, 0, -0.08] });
+  }
+  if (variant % 3 === 2) {
+    for (const s of [-1, 1]) box(g, [0.3, 0.42, 0.03], [s * 0.3, 0.86, -0.25], main, { rot: [0.25, s * 0.5, s * 0.5] });
+  }
+  if (variant % 2 === 1) {
+    box(g, [0.04, 0.36, 0.26], [-0.45, 0.5, 0.04], main);
+    box(g, [0.02, 0.2, 0.1], [-0.475, 0.52, 0.04], accent);
+  }
   return g;
 }
 
@@ -90,16 +123,23 @@ export function dragon(parent, pos, size, material, rotY = 0) {
   return g;
 }
 
-/** A round plush toy. */
-export function plush(parent, pos, r, colour, face = 0xf3d9c9) {
+/** A round plush toy: big head, small limbs, a tuft on top. */
+export function plush(parent, pos, r, colour, face = 0xf6dccf) {
   const body = mat(colour, { roughness: 1 });
   const skin = mat(face, { roughness: 0.9 });
+  const blush = mat(0xf09aa8, { roughness: 0.9 });
   const g = grp(parent, pos);
-  ball(g, r, [0, r * 0.95, 0], body, { scale: [1, 0.95, 0.9] });
-  ball(g, r * 0.62, [0, r * 1.0, r * 0.5], skin, { scale: [1, 0.9, 0.6] });
+  ball(g, r * 0.7, [0, r * 0.55, 0], body, { scale: [1, 0.9, 0.85] });
+  ball(g, r, [0, r * 1.5, 0], body, { scale: [1.05, 0.95, 0.95] });
+  ball(g, r * 0.7, [0, r * 1.42, r * 0.42], skin, { scale: [1, 0.85, 0.6] });
+  cyl(g, [0, r * 0.22], r * 0.5, [0, r * 2.55, 0], mat(0x5fa84a, { roughness: 1 }), { seg: 6, rot: [0, 0, 0.3] });
   for (const s of [-1, 1]) {
-    ball(g, r * 0.3, [s * r * 0.62, r * 1.75, 0], body);
-    ball(g, r * 0.09, [s * r * 0.25, r * 1.1, r * 0.86], M.black);
+    ball(g, r * 0.32, [s * r * 0.72, r * 2.2, 0], body);
+    ball(g, r * 0.24, [s * r * 0.62, r * 0.65, r * 0.25], body);
+    ball(g, r * 0.26, [s * r * 0.35, r * 0.12, r * 0.3], body, { scale: [1, 0.7, 1.3] });
+    ball(g, r * 0.13, [s * r * 0.27, r * 1.5, r * 0.8], M.black, { scale: [1, 1.25, 0.5] });
+    ball(g, r * 0.04, [s * r * 0.25, r * 1.56, r * 0.86], M.white);
+    ball(g, r * 0.12, [s * r * 0.47, r * 1.3, r * 0.72], blush, { scale: [1, 0.6, 0.4] });
   }
   return g;
 }

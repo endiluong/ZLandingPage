@@ -74,6 +74,16 @@ export function tiled(parent, x0, x1, y0, y1, z, material, tile, o = {}) {
   return put(parent, geometry, [(x0 + x1) / 2, (y0 + y1) / 2, z], material, { cast: false, ...o });
 }
 
+/** A cable or hose through the given points. */
+export function cable(parent, points, radius, material) {
+  const path = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(path, Math.max(12, points.length * 6), radius, 6), material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
 export function grp(parent, pos = [0, 0, 0], rotY = 0) {
   const g = new THREE.Group();
   g.position.set(pos[0], pos[1], pos[2]);
