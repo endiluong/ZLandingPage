@@ -15,7 +15,7 @@ const lite = window.matchMedia('(pointer: coarse)').matches || window.innerWidth
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, lite ? 1.5 : 2));
+renderer.setPixelRatio(1);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 // The room is static, so shadows are only redrawn while the light is changing.
@@ -37,9 +37,8 @@ const composer = new EffectComposer(renderer, target);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 const ao = new GTAOPass(scene, camera, 1, 1);
-ao.updateGtaoMaterial({ radius: 0.5, distanceExponent: 1.2, thickness: 1.5, scale: 1.3, samples: 12 });
+ao.updateGtaoMaterial({ radius: 0.5, distanceExponent: 1.2, thickness: 1.5, scale: 1.3, samples: 8 });
 ao.blendIntensity = 1;
-ao.enabled = !lite;
 composer.addPass(ao);
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.25, 0.5, 1.6);
 composer.addPass(bloom);
@@ -54,8 +53,8 @@ let style = 'full';
 function setStyle(name) {
   style = name;
   renderPass.overrideMaterial = name === 'clay' ? clay : name === 'wire' ? wire : null;
-  ao.enabled = !lite && name !== 'wire';
-  bloom.enabled = name === 'full';
+  ao.enabled = TIERS[tier].ao && name !== 'wire';
+  bloom.enabled = TIERS[tier].bloom && name === 'full';
 }
 
 // ---------- curtains ----------
@@ -97,7 +96,7 @@ function bind(control, onChange) {
   });
 }
 bind('lighting', (value) => lighting.set(value, reducedMotion));
-bind('style', setStyle);
+bind('style', (value) => { setStyle(value); wake = 30; });
 bind('lang', (value) => {
   applyLanguage(value);
   try { localStorage.setItem('lang', value); } catch { /* storage unavailable */ }
@@ -108,34 +107,81 @@ applyLanguage(lang);
 for (const b of document.querySelectorAll('[data-control="lang"] button')) b.setAttribute('aria-pressed', String(b.dataset.value === lang));
 lighting.set('night', true);
 
-// ---------- sizing ----------
-function resize() {
+// ---------- quality ----------
+// Start high and step down whenever the frame rate can't keep up. It never
+// steps back up, so it settles instead of flickering between levels.
+const TIERS = [
+  { scale: 1.5, ao: true, bloom: true },
+  { scale: 1.2, ao: true, bloom: true },
+  { scale: 1.0, ao: false, bloom: true },
+  { scale: 0.8, ao: false, bloom: false },
+  { scale: 0.6, ao: false, bloom: false },
+];
+let tier = lite ? 2 : 0;
+let wake = 30; // frames that must be drawn even if nothing seems to move
+
+function applyQuality() {
+  const q = TIERS[tier];
+  const ratio = Math.min(window.devicePixelRatio, 2) * (q.scale / 1.5);
   const w = window.innerWidth;
   const h = window.innerHeight;
+  renderer.setPixelRatio(Math.max(0.5, ratio));
   renderer.setSize(w, h, false);
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(w, h);
-  camera.aspect = w / h;
+  setStyle(style);
+  wake = 30;
+}
+
+// ---------- sizing ----------
+function resize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
   // Portrait screens need a wider lens to keep the room in frame.
   camera.fov = camera.aspect < 1 ? 76 : 55;
   camera.updateProjectionMatrix();
+  applyQuality();
 }
 window.addEventListener('resize', resize);
 resize();
 
 // ---------- loop ----------
 const timer = new THREE.Timer();
+const lastPosition = new THREE.Vector3();
+const lastQuaternion = new THREE.Quaternion();
 let time = 0;
 let settle = 5; // frames of shadow redraw still owed
+let idle = 0; // seconds since the last drawn frame
+let slow = 0; // running count of slow frames, for stepping quality down
+let sampled = 0;
 renderer.setAnimationLoop(() => {
   timer.update();
-  const dt = Math.min(timer.getDelta(), 0.1);
+  const raw = timer.getDelta();
+  const dt = Math.min(raw, 0.1);
   time += dt;
   let openness = 0;
+  let active = wake > 0;
   for (const c of curtains) {
-    if (c.update(reducedMotion ? 1 : dt)) settle = 3;
+    if (c.update(reducedMotion ? 1 : dt)) { settle = 3; active = true; }
     openness += c.open / curtains.length;
   }
+  if (lighting.update(dt, openness)) settle = 3;
+  if (lighting.busy) active = true;
+  if (settle > 0) {
+    settle--;
+    active = true;
+    renderer.shadowMap.needsUpdate = true;
+  }
+  tour.update(dt);
+  if (camera.position.distanceToSquared(lastPosition) > 1e-9 || Math.abs(camera.quaternion.dot(lastQuaternion)) < 1 - 1e-9) active = true;
+
+  // When nothing is moving, only redraw ten times a second (for the shrimp).
+  idle += dt;
+  if (!active && idle < 0.1) return;
+  idle = 0;
+  if (wake > 0) wake--;
+  lastPosition.copy(camera.position);
+  lastQuaternion.copy(camera.quaternion);
+
   if (!reducedMotion) {
     for (const s of room.water.shrimp) {
       const t = time * s.speed + s.phase;
@@ -144,14 +190,18 @@ renderer.setAnimationLoop(() => {
       s.node.rotation.y = Math.cos(t) > 0 ? 0 : Math.PI;
     }
   }
-  if (lighting.update(dt, openness)) settle = 3;
-  if (settle > 0) {
-    settle--;
-    renderer.shadowMap.needsUpdate = true;
-  }
   if (style === 'wire') scene.background.copy(wireBackground);
-  tour.update(dt);
   composer.render(dt);
+
+  // Judge speed only on consecutive active frames, ignoring tab switches.
+  if (active && raw < 0.5 && time > 1.5) {
+    sampled++;
+    if (raw > 1 / 40) slow++;
+    if (sampled >= 45) {
+      if (slow > 22 && tier < TIERS.length - 1) { tier++; applyQuality(); }
+      sampled = slow = 0;
+    }
+  }
 });
 
 document.documentElement.dataset.ready = 'true';

@@ -2,7 +2,6 @@
 // eases the live values toward it. The balcony faces east (+x), so direct sun
 // only reaches into the room in the morning.
 import * as THREE from 'three';
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const CENTRE = new THREE.Vector3(1.9, 0.6, 2.25);
@@ -42,7 +41,6 @@ function blank() {
 }
 
 export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
-  RectAreaLightUniformsLib.init();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.background = new THREE.Color();
@@ -83,15 +81,15 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
   const softFrom = head.clone().add(room.paint.booth.clone().sub(head).normalize().multiplyScalar(0.26));
   const soft = spot(0xfff1dc, softFrom, room.paint.booth, 0.75, 0.8, 1024);
 
-  const panel = (colour, w, h, position, facing) => {
-    const l = new THREE.RectAreaLight(colour, 0, w, h);
+  // Screen glow. Plain point lights: area lights cost far more per pixel.
+  const glow = (colour, position) => {
+    const l = new THREE.PointLight(colour, 0, 4, 2);
     l.position.copy(position);
-    l.lookAt(position.clone().add(facing));
     scene.add(l);
     return l;
   };
-  const monitors = panel(0xbfd4ff, 0.6, 0.75, room.desk.monitors, new THREE.Vector3(1, 0, 0));
-  const tv = panel(0xcfe2ff, 1.2, 0.68, room.display.tv, new THREE.Vector3(0, 0, -1));
+  const monitors = glow(0xbfd4ff, room.desk.monitors);
+  const tv = glow(0xcfe2ff, room.display.tv);
 
   const live = blank();
   const goal = blank();
@@ -113,8 +111,8 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
     lamp.intensity = live.lamp;
     aqua.intensity = live.aqua;
     soft.intensity = live.soft;
-    monitors.intensity = live.screens * 2.2;
-    tv.intensity = live.screens * 1.6;
+    monitors.intensity = live.screens * 0.9;
+    tv.intensity = live.screens * 1.3;
     for (const m of room.desk.screens) m.emissiveIntensity = 0.55 + live.screens * 0.5;
     room.display.tvScreen.emissiveIntensity = 0.5 + live.screens * 0.5;
     room.shell.ceilingLamp.emissiveIntensity = live.ceiling * 0.12;
@@ -136,8 +134,13 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
     }
   }
 
+  const api = { set, update, busy: true };
+
   /** Returns true while the sun is still moving, so shadows need redrawing. */
   function update(dt, curtainOpenness) {
+    api.busy = dirty || daylight !== curtainOpenness;
+    for (const k of NUMBERS) if (Math.abs(goal[k] - live[k]) > 0.002) api.busy = true;
+    for (const k of COLORS) if (Math.abs(goal[k].r - live[k].r) + Math.abs(goal[k].b - live[k].b) > 0.002) api.busy = true;
     daylight = curtainOpenness;
     const a = 1 - Math.exp(-dt * 3);
     const moving = live.sun.distanceToSquared(goal.sun) > 0.0004 || Math.abs(live.sunPower - goal.sunPower) > 0.01;
@@ -150,5 +153,5 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
     return redraw;
   }
 
-  return { set, update };
+  return api;
 }
