@@ -79,7 +79,7 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
   // Start the beam just in front of the softbox so its own hood doesn't shadow it.
   const head = room.display.softbox.position;
   const softFrom = head.clone().add(room.paint.booth.clone().sub(head).normalize().multiplyScalar(0.26));
-  const soft = spot(0xfff1dc, softFrom, room.paint.booth, 0.75, 0.8, 1024);
+  const soft = spot(0xfff1dc, softFrom, room.paint.booth, 0.75, 0.8, 0);
 
   // Screen glow. Plain point lights: area lights cost far more per pixel.
   const glow = (colour, position) => {
@@ -117,6 +117,8 @@ export function createLighting(scene, renderer, room, { shadows = 4096 } = {}) {
     room.display.tvScreen.emissiveIntensity = 0.5 + live.screens * 0.5;
     room.shell.ceilingLamp.emissiveIntensity = live.ceiling * 0.12;
     room.water.glow.emissiveIntensity = 0.4 + live.aqua * 0.25;
+    // A light that is off still costs shader time on every pixel, so hide it.
+    for (const l of [sun, ceiling, lamp, aqua, soft, monitors, tv]) l.visible = l.intensity > 0.003;
     room.display.softbox.glow.emissiveIntensity = live.soft * 0.25;
   }
 

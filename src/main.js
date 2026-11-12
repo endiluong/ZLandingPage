@@ -28,7 +28,7 @@ const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 40);
 
 const room = buildRoom();
 scene.add(room.root);
-const lighting = createLighting(scene, renderer, room, { shadows: lite ? 2048 : 4096 });
+const lighting = createLighting(scene, renderer, room, { shadows: 2048 });
 const tour = createTour(camera, { reducedMotion });
 
 // ---------- post-processing: ambient occlusion, bloom, tone mapping ----------
@@ -111,22 +111,31 @@ lighting.set('night', true);
 // Start high and step down whenever the frame rate can't keep up. It never
 // steps back up, so it settles instead of flickering between levels.
 const TIERS = [
-  { scale: 1.5, ao: true, bloom: true },
-  { scale: 1.2, ao: true, bloom: true },
-  { scale: 1.0, ao: false, bloom: true },
-  { scale: 0.8, ao: false, bloom: false },
-  { scale: 0.6, ao: false, bloom: false },
+  { scale: 1.5, msaa: 4, ao: true, bloom: true },
+  { scale: 1.0, msaa: 4, ao: false, bloom: true },
+  { scale: 1.0, msaa: 0, ao: false, bloom: false },
+  { scale: 0.75, msaa: 0, ao: false, bloom: false },
+  { scale: 0.5, msaa: 0, ao: false, bloom: false },
 ];
-let tier = lite ? 2 : 0;
-let wake = 30; // frames that must be drawn even if nothing seems to move
+const params = new URLSearchParams(location.search);
+// ?q=0..4 pins a quality level; otherwise it adapts.
+const pinned = params.has('q');
+let tier = pinned ? THREE.MathUtils.clamp(Number(params.get('q')) || 0, 0, TIERS.length - 1) : lite ? 2 : 1;
+let wake = 40; // frames that must be drawn even if nothing seems to move
 
 function applyQuality() {
   const q = TIERS[tier];
-  const ratio = Math.min(window.devicePixelRatio, 2) * (q.scale / 1.5);
+  const ratio = Math.min(window.devicePixelRatio, q.scale);
   const w = window.innerWidth;
   const h = window.innerHeight;
   renderer.setPixelRatio(Math.max(0.5, ratio));
   renderer.setSize(w, h, false);
+  for (const t of [composer.renderTarget1, composer.renderTarget2]) {
+    if (t.samples !== q.msaa) {
+      t.samples = q.msaa;
+      t.dispose();
+    }
+  }
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(w, h);
   setStyle(style);
@@ -153,6 +162,22 @@ let settle = 5; // frames of shadow redraw still owed
 let idle = 0; // seconds since the last drawn frame
 let slow = 0; // running count of slow frames, for stepping quality down
 let sampled = 0;
+let spent = 0;
+let drawn = 0;
+let fps = 0;
+
+// ?stats shows a one-line readout for diagnosing slow machines.
+let stats = null;
+let gpuName = '';
+if (params.has('stats')) {
+  stats = document.createElement('div');
+  stats.className = 'stats';
+  document.body.append(stats);
+  const gl = renderer.getContext();
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  gpuName = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown GPU';
+  renderer.info.autoReset = false;
+}
 renderer.setAnimationLoop(() => {
   timer.update();
   const raw = timer.getDelta();
@@ -191,15 +216,22 @@ renderer.setAnimationLoop(() => {
     }
   }
   if (style === 'wire') scene.background.copy(wireBackground);
+  if (stats) renderer.info.reset();
   composer.render(dt);
 
-  // Judge speed only on consecutive active frames, ignoring tab switches.
-  if (active && raw < 0.5 && time > 1.5) {
+  // Judge speed only on active frames, ignoring tab switches.
+  if (active && raw < 10 && ++drawn > 4) {
     sampled++;
-    if (raw > 1 / 40) slow++;
-    if (sampled >= 45) {
-      if (slow > 22 && tier < TIERS.length - 1) { tier++; applyQuality(); }
-      sampled = slow = 0;
+    spent += raw;
+    if (raw > 1 / 45) slow++;
+    if (sampled >= 20 || spent > 2) {
+      fps = sampled / spent;
+      if (!pinned && slow > sampled * 0.5 && tier < TIERS.length - 1) { tier++; applyQuality(); }
+      sampled = slow = spent = 0;
+      if (stats) {
+        const i = renderer.info.render;
+        stats.textContent = `${fps.toFixed(0)} fps · level ${tier} · ${renderer.getPixelRatio().toFixed(2)}x · ${(i.triangles / 1000).toFixed(0)}k tris · ${i.calls} calls · ${gpuName}`;
+      }
     }
   }
 });
