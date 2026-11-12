@@ -7,7 +7,7 @@ import { M, bust, bottle, mecha } from './props.js';
 const ST = 0.765; // table surface height
 
 function workTable(f, tex) {
-  const top = mat(0xffffff, { map: tex.tableWood, roughness: 0.6 });
+  const top = mat(0xe6cdb4, { ...tex.pbr.walnut, gain: 2.2, roughness: 0.6, tile: 0.9, grain: 'z' });
   box(f, [1.0, 0.03, 0.6], [0.55, 0.75, 0.33], top, { r: 0.004 });
   for (const x of [0.08, 1.02]) for (const z of [0.06, 0.6]) box(f, [0.04, 0.74, 0.04], [x, 0.37, z], M.black);
   box(f, [0.94, 0.02, 0.5], [0.55, 0.2, 0.33], M.black);

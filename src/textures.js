@@ -25,45 +25,6 @@ function speckle(g, w, h, n, r, alpha) {
   }
 }
 
-function floor() {
-  const r = rng(11);
-  return tex(512, 512, (g, w, h) => {
-    for (let i = 0; i < 2; i++) {
-      for (let j = 0; j < 2; j++) {
-        const v = 196 + Math.floor(r() * 10);
-        g.fillStyle = `rgb(${v + 8},${v},${v - 16})`;
-        g.fillRect(i * 256, j * 256, 256, 256);
-      }
-    }
-    speckle(g, w, h, 5000, r, 0.035);
-    g.strokeStyle = '#9d927f';
-    g.lineWidth = 5;
-    for (const p of [0, 256, 512]) {
-      g.beginPath(); g.moveTo(p, 0); g.lineTo(p, h); g.stroke();
-      g.beginPath(); g.moveTo(0, p); g.lineTo(w, p); g.stroke();
-    }
-  }, { repeat: true });
-}
-
-function wood(base, dark, seed) {
-  const r = rng(seed);
-  return tex(512, 512, (g, w, h) => {
-    g.fillStyle = base;
-    g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 260; i++) {
-      const y = r() * h;
-      g.strokeStyle = dark;
-      g.globalAlpha = 0.05 + r() * 0.16;
-      g.lineWidth = 0.6 + r() * 2.4;
-      g.beginPath();
-      g.moveTo(0, y);
-      g.bezierCurveTo(w * 0.3, y + (r() - 0.5) * 14, w * 0.7, y + (r() - 0.5) * 14, w, y + (r() - 0.5) * 8);
-      g.stroke();
-    }
-    g.globalAlpha = 1;
-  });
-}
-
 function wallTile() {
   const r = rng(5);
   return tex(256, 256, (g, w, h) => {
@@ -312,13 +273,32 @@ function cuttingMat() {
   });
 }
 
+// Photographic material maps from AMD's GPUOpen MaterialX Library
+// (matlib.gpuopen.com, "MIT Public Domain"). Files live in public/textures.
+function loadMaps() {
+  const loader = new THREE.TextureLoader();
+  const load = (name, colour = false) => {
+    const t = loader.load(`${import.meta.env.BASE_URL}textures/${name}.jpg`);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    if (colour) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  return {
+    floor: { map: load('floor_color', true), normalMap: load('floor_normal'), roughnessMap: load('floor_rough') },
+    walnut: { map: load('walnut_color', true), normalMap: load('walnut_normal') },
+    mahogany: { map: load('mahogany_color', true), normalMap: load('mahogany_normal') },
+    plaster: { normalMap: load('plaster_normal'), roughnessMap: load('plaster_rough') },
+    plywood: { map: load('plywood_color', true), normalMap: load('plywood_normal') },
+    linen: { normalMap: load('linen_normal') },
+    fleece: { normalMap: load('fleece_normal') },
+    steel: { roughnessMap: load('steel_rough') },
+  };
+}
+
 export function makeTextures() {
   return {
-    floor: floor(),
-    walnut: wood('#5a3a26', '#2a170d', 3),
-    darkWood: wood('#4a1d17', '#1f0806', 9),
-    plywood: wood('#c69c6d', '#8a6238', 15),
-    tableWood: wood('#4b3a30', '#221812', 27),
+    pbr: loadMaps(),
     wallTile: wallTile(),
     wallBand: wallBand(),
     pegBlack: pegboard('#1c1d20', '#050506'),

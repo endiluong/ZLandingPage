@@ -40,7 +40,7 @@ function keyboard(f, x, z) {
 }
 
 export function buildDeskWall(f, tex) {
-  const walnut = mat(0xffffff, { map: tex.walnut, roughness: 0.42 });
+  const walnut = mat(0xffc79a, { ...tex.pbr.walnut, gain: 3.4, roughness: 0.45, tile: 0.9, grain: 'z' });
   const screens = [];
 
   // ---- standing desk ----

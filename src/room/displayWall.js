@@ -126,7 +126,7 @@ export function buildDisplayWall(f, tex, boothTarget) {
   bookshelf(f, tex);
 
   // bean bag
-  const fabric = mat(0x8c8e92, { roughness: 1 });
+  const fabric = mat(0x8c8e92, { ...tex.pbr.fleece, roughness: 1, tile: 0.25 });
   ball(f, 0.46, [2.3, 0.25, 0.92], fabric, { scale: [1, 0.56, 1], seg: 28 });
   ball(f, 0.34, [2.3, 0.42, 0.8], fabric, { scale: [1.05, 0.62, 0.9], seg: 24 });
 
@@ -135,7 +135,7 @@ export function buildDisplayWall(f, tex, boothTarget) {
   slab(f, 0.45, 0.35, [2.98, 2.0, 0.0225], mat(0xffffff, { map: tex.cats, roughness: 0.85 }));
 
   // TV on a carved cabinet
-  const carved = mat(0xffffff, { map: tex.darkWood, roughness: 0.4 });
+  const carved = mat(0xffb9a6, { ...tex.pbr.mahogany, gain: 2.6, roughness: 0.38, tile: 1.1, grain: 'x' });
   box(f, [1.2, 0.56, 0.42], [3.7, 0.34, 0.23], carved, { r: 0.01 });
   for (const x of [3.16, 4.24]) for (const z of [0.07, 0.39]) box(f, [0.06, 0.07, 0.06], [x, 0.035, z], carved);
   for (const dx of [-0.3, 0.3]) {

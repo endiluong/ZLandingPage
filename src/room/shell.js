@@ -55,7 +55,7 @@ function wainscot(frame, x0, x1, tex) {
 }
 
 function entranceDoor(frame, tex) {
-  const wood = mat(0xffffff, { map: tex.darkWood, roughness: 0.45 });
+  const wood = mat(0xffb9a6, { ...tex.pbr.mahogany, gain: 3.2, roughness: 0.42, tile: 1.1, grain: 'y' });
   const x0 = 3.05, x1 = 3.95, cx = 3.5;
   box(frame, [0.08, 2.58, 0.18], [x0 - 0.03, 1.29, -0.03], wood);
   box(frame, [0.08, 2.58, 0.18], [x1 + 0.03, 1.29, -0.03], wood);
@@ -74,7 +74,7 @@ function entranceDoor(frame, tex) {
 }
 
 function balconyDoor(frame, tex) {
-  const wood = mat(0xffffff, { map: tex.darkWood, roughness: 0.45 });
+  const wood = mat(0xffb9a6, { ...tex.pbr.mahogany, gain: 3.2, roughness: 0.42, tile: 1.1, grain: 'y' });
   const glass = mat(0xf2f5f3, { roughness: 0.6, transparent: true, opacity: 0.32 });
   const x0 = 1.7, x1 = 2.55, cx = 2.125, z = -0.05;
   box(frame, [0.07, 2.62, 0.16], [x0 - 0.03, 1.31, z], wood);
@@ -99,7 +99,7 @@ function balconyDoor(frame, tex) {
 }
 
 function windowUnit(frame, x0, x1, y0, y1, tex, grille) {
-  const wood = mat(0xffffff, { map: tex.darkWood, roughness: 0.5 });
+  const wood = mat(0xffb9a6, { ...tex.pbr.mahogany, gain: 3.2, roughness: 0.42, tile: 1.1, grain: 'y' });
   const glass = mat(0xdcebf0, { roughness: 0.05, transparent: true, opacity: 0.14 });
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, w = x1 - x0, h = y1 - y0, z = -0.06;
   box(frame, [w + 0.1, 0.06, 0.14], [cx, y0 - 0.02, z], wood);
@@ -153,7 +153,7 @@ function curtainPanel(frame, { anchor, dir, width, top, bottom, z }) {
 }
 
 function curtainSet(frame, tex, x0, x1, z, panels) {
-  const rod = mat(0xffffff, { map: tex.darkWood, roughness: 0.4 });
+  const rod = mat(0x5a2a22, { roughness: 0.4 });
   const top = 2.74;
   cyl(frame, 0.016, x1 - x0, [(x0 + x1) / 2, top, z], rod, { rot: [0, 0, Math.PI / 2], seg: 12 });
   for (const ex of [x0, x1]) {
@@ -182,11 +182,15 @@ function curtainSet(frame, tex, x0, x1, z, panels) {
 }
 
 export function buildShell(root, frames, tex) {
-  const paint = mat(0xefe9dc, { roughness: 0.92 });
+  const weave = tex.pbr.linen.normalMap.clone();
+  weave.repeat.set(5, 10);
+  curtainMaterial.normalMap = weave;
+  curtainMaterial.normalScale.set(0.6, 0.6);
+  const paint = mat(0xefe9dc, { ...tex.pbr.plaster, roughness: 1, tile: 1.6 });
   const { w, d, h, recessX, recessZ } = ROOM;
 
   // Floor and ceiling. The notch at the north-east corner is the balcony.
-  const floorMat = mat(0xffffff, { map: tex.floor, roughness: 0.28 });
+  const floorMat = mat(0xf2ece2, { ...tex.pbr.floor, roughness: 0.5, tile: 1.2 });
   const fl = grp(root, [0, 0, 0]);
   fl.rotation.x = -Math.PI / 2;
   tiled(fl, 0, w, -d, 0, 0, floorMat, [0.8, 0.8], { receive: true });
@@ -194,7 +198,7 @@ export function buildShell(root, frames, tex) {
   box(root, [w + 2 * T, 0.1, d + 2 * T], [w / 2, -0.051, d / 2], paint);
   box(root, [1.6, 0.1, recessZ], [w + 0.8, -0.051, recessZ / 2], mat(0x8f8f8c, { roughness: 0.9 }));
   box(root, [recessX - w, 0.1, d - recessZ + T], [(w + recessX) / 2 + T / 2, -0.051, (recessZ + d) / 2], paint);
-  const ceiling = mat(0xf6f3ec, { roughness: 0.95 });
+  const ceiling = mat(0xf6f3ec, { ...tex.pbr.plaster, roughness: 1, tile: 1.6 });
   box(root, [w + 2 * T, 0.1, d + 2 * T], [w / 2, h + 0.05, d / 2], ceiling);
   box(root, [recessX - w + T, 0.1, d - recessZ + 2 * T], [(w + recessX) / 2 + T / 2, h + 0.05, (recessZ + d) / 2], ceiling);
 

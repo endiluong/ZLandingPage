@@ -16,7 +16,14 @@ export function mat(color, opts = {}) {
       .join(',');
   let m = materials.get(key);
   if (!m) {
-    m = new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...opts });
+    // tile / grain are not three.js options: bake() uses them to lay the
+    // texture out at real-world scale (see worldUV below).
+    // gain brightens a dark photo texture beyond what a 0..1 colour allows.
+    const { tile, grain, gain, ...rest } = opts;
+    m = new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...rest });
+    if (gain) m.color.multiplyScalar(gain);
+    if (tile) m.userData.tile = tile;
+    if (grain) m.userData.grain = grain;
     materials.set(key, m);
   }
   return m;
@@ -84,6 +91,27 @@ export function rng(seed) {
   };
 }
 
+const AXES = ['x', 'y', 'z'];
+
+/**
+ * Box-project UVs from world position so a texture repeats every `tile`
+ * metres on every object, whatever its size. `grain` names the world axis the
+ * texture's horizontal direction should follow where the face allows it.
+ */
+function worldUV(geometry, tile, grain) {
+  const pos = geometry.attributes.position;
+  const nor = geometry.attributes.normal;
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < pos.count; i++) {
+    const n = [Math.abs(nor.getX(i)), Math.abs(nor.getY(i)), Math.abs(nor.getZ(i))];
+    const p = [pos.getX(i), pos.getY(i), pos.getZ(i)];
+    const facing = n[0] > n[1] && n[0] > n[2] ? 0 : n[1] > n[2] ? 1 : 2;
+    let [a, b] = [0, 1, 2].filter((k) => k !== facing);
+    if (AXES[b] === grain) [a, b] = [b, a];
+    uv.setXY(i, p[a] / tile, p[b] / tile);
+  }
+}
+
 /**
  * Merge every static mesh under root into one mesh per material. Anything
  * inside an object with userData.dynamic = true is left alone.
@@ -105,6 +133,7 @@ export function bake(root) {
       g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
     }
     g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse, o.matrixWorld));
+    if (o.material.userData.tile) worldUV(g, o.material.userData.tile, o.material.userData.grain);
     const key = o.material.uuid + (o.castShadow ? 'c' : '-') + (o.receiveShadow ? 'r' : '-');
     if (!buckets.has(key)) buckets.set(key, { material: o.material, cast: o.castShadow, receive: o.receiveShadow, list: [] });
     buckets.get(key).list.push(g);

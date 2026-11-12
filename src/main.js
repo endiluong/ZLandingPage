@@ -142,6 +142,9 @@ function applyQuality() {
   wake = 30;
 }
 
+// Redraw once the texture images have arrived.
+THREE.DefaultLoadingManager.onLoad = () => { wake = 60; };
+
 // ---------- sizing ----------
 function resize() {
   camera.aspect = window.innerWidth / window.innerHeight;

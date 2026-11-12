@@ -6,7 +6,7 @@ import { M, bust } from './props.js';
 
 const SB = 0.778; // desk surface height
 
-function toolChest(f) {
+function toolChest(f, tex) {
   const cx = 0.65, cz = 0.33;
   for (const x of [0.22, 1.08]) for (const z of [0.12, 0.54]) {
     box(f, [0.04, 0.82, 0.04], [x, 0.47, z], M.black);
@@ -20,7 +20,7 @@ function toolChest(f) {
   box(f, [0.9, 0.02, 0.45], [cx, 0.14, cz], M.black);
   box(f, [0.5, 0.2, 0.34], [0.5, 0.26, cz], mat(0xdfe6e8, { roughness: 0.2, transparent: true, opacity: 0.45 }), { r: 0.015, cast: false });
   box(f, [0.52, 0.02, 0.36], [0.5, 0.37, cz], M.white);
-  box(f, [0.93, 0.035, 0.48], [cx, 0.9, cz], mat(0xc79a62, { roughness: 0.5 }), { r: 0.006 });
+  box(f, [0.93, 0.035, 0.48], [cx, 0.9, cz], mat(0xffffff, { ...tex.pbr.plywood, roughness: 0.5, tile: 0.6, grain: 'x' }), { r: 0.006 });
   return 0.918;
 }
 
@@ -143,7 +143,7 @@ function espresso(f, x, z) {
 }
 
 export function buildWaterWall(f, tex) {
-  const top = toolChest(f);
+  const top = toolChest(f, tex);
   filamentPrinter(f, 0.44, top, 0.34);
   resinPrinter(f, 0.92, top, 0.34);
 
@@ -181,7 +181,7 @@ export function buildWaterWall(f, tex) {
   box(f, [0.03, 0.03, 0.07], [3.14, SB + 0.2, 0.53], M.steel);
 
   // ---- cubby shelf above the bar ----
-  const ply = mat(0xffffff, { map: tex.plywood, roughness: 0.7 });
+  const ply = mat(0xffffff, { ...tex.pbr.plywood, roughness: 0.7, tile: 0.6, grain: 'x' });
   const cy = 1.5, cx = 2.92;
   box(f, [0.8, 0.014, 0.2], [cx, cy + 0.18, 0.1], ply);
   box(f, [0.8, 0.014, 0.2], [cx, cy - 0.18, 0.1], ply);
